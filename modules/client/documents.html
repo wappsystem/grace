@@ -1,0 +1,131 @@
+<section>
+      VmInclude:__BASE__/vmiis/Common-Code/grid/grid.html
+</section>
+<script>
+    function F__ID(){
+        //-------------------------------------
+        _fields="_Form,_Hidden|job_uid,File Name|job,Job Type|job_type,Document,Last Modified|lastModified,Size,Description,Type";
+        _fields+=",Submit Date|DateTime,Submitted by|Author,_Delete";
+        //-------------------------------------
+        VmInclude:__BASE__/vmiis/Common-Code/grid/grid.js
+        VmInclude:__BASE__/vmiis/Common-Code/style/ease-in-out.2.js
+        VmInclude:__BASE__/wappsystem/grace/Modules/Control_panels/client_sub.js
+        //-------------------------------------
+        var _mlist=[];
+        var _ids=[];
+        var job_tid='';
+        var document_type_list_tid='';
+        //-------------------------------------
+        $('#D__ID').on('load',function(){
+            _mlist=$vm.vm['__ID'].op.mlist;
+            _ids=$vm.vm['__ID'].op.ids;
+            alert(_mlist+' '+_ids);
+            job_uid=$vm.vm['__ID'].op.job_uid;
+            job_type=$vm.vm['__ID'].op.job_type;
+            job=$vm.vm['__ID'].op.job;
+            //job_tid=_mlist[_ids.scheduler_record].table_id;
+            //document_type_list_tid=_mlist[_ids.document_type_list].table_id;;
+            //alert(job_uid+' '+job_type+' '+job)
+            _set_req(); _request_data();
+        })
+        //-------------------------------------
+        _set_req=function(){
+            var sql="";
+            var sql_n="";
+            sql+="with document as (select ID,UID,PUID,Information,DateTime,Author,RowNum=row_number() over (order by ID DESC) from [TABLE-"+_db_pid+"-@S1] where PUID=@I2)";
+            sql+="select ID,UID,Information,DateTime,Author,RowNum,dirty=0, valid=1 from document where RowNum between @I6 and @I7";
+            sql_n=" select count(ID) from [TABLE-"+_db_pid+"-@S1] where PUID=@I2";
+            _req={cmd:'query_records',sql:sql,sql_n:sql_n,i2:job_uid,s1:'"'+$('#keyword__ID').val()+'"',I:$('#I__ID').text(),page_size:$('#page_size__ID').val()}
+        }
+        //-------------------------------------
+        _cell_render=function(records,I,field,td,set_value,source){
+            switch(field){
+                case 'job_uid':
+                case 'job_type':
+                    records[I].vm_readonly[field]=true;
+                    td.css('color','#888');
+                    break;
+                case 'Document':
+                    VmInclude:__BASE__/vmiis/Common-Code/grid/field_file_with_size.js
+                break;
+                case 'Size':
+                    records[I].vm_custom[field]=true;
+                break;
+                case 'lastModified':
+                    records[I].vm_custom[field]=true;
+                break;
+                case 'Type':
+                    var sql="with tb as (select name=@('Document_Type'),value2=uid from [TABLE-"+document_type_list_tid+"])";
+                    sql+=" select top 10 name,value=name,value2 from tb where Name like '%'+@S1+'%' ";
+                    VmInclude:__BASE__/vmiis/Common-Code/grid/field_auto.js
+                    break;
+                case 'job':
+                    var sql="with tb as (select name=@('File_name'),value2=uid,value3=@('job_type') from [TABLE-"+job_tid+"])";
+                    sql+=" select top 10 name,value=name,value2,value3 from tb where Name like '%'+@S1+'%' ";
+                    td.autocomplete({
+                        minLength:0,
+                        source:function(request,response){
+                            $VmAPI.request({data:{cmd:'auto',s1:request.term,sql:sql,minLength:0},callback:function(res){
+                                response($vm.autocomplete_list(res.table));
+                            }});
+                        },
+                        select: function(event,ui){
+                            records[I][field+'_uid']=ui.item.value2;
+                            records[I]['job_type']=ui.item.value3;
+                            for(key in ui.item){
+                                if(key.indexOf('field_')!==-1){
+                                    var k=key.replace('field_','')
+                                    var v=ui.item[key];
+                                    set_value(v,records,I,k);
+                                    if(source=='grid'){
+                                        td.parent().find("td[data-id='"+k+"']").html(v);
+                                    }
+                                    else{
+                                        td.parent().parent().find("td[data-id='"+k+"']").html(v);
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    td.focus(function(){td.autocomplete("search","");});
+                    break;
+            }
+        }
+        //-------------------------------------
+        _after_change=function(records,I,field,td,set_value,source){
+            switch(field){
+                case 'job':
+                    _render(I);
+                    break;
+            }
+        }
+        //-------------------------------------
+        _new_pre_data_process=function(){
+            if($vm.vm['__ID'].op.job_uid!==undefined) _records[0].job_uid=$vm.vm['__ID'].op.job_uid;
+            if($vm.vm['__ID'].op.job!==undefined) _records[0].job=$vm.vm['__ID'].op.job;
+            if($vm.vm['__ID'].op.job_type!==undefined) _records[0].job_type=$vm.vm['__ID'].op.job_type;
+            else if($vm.vm['__ID'].op.applicant_uid!==undefined ){
+                jQuery.ajaxSetup({async:false});
+                sql="select name=@('job') from [TABLE-"+scheduler_tid+"] where UID=@I1 ";
+                var req_data={cmd:'query_records',sql:sql,i1:$vm.vm['__ID'].op.job_uid};
+                $VmAPI.request({data:req_data,callback:function(res){
+                    if(res.records.length>0){
+                        _records[0].job=res.records[0].name
+                    }
+                }});
+                jQuery.ajaxSetup({async:true});
+            }
+        }
+        //-------------------------------------
+        _before_submit=function(record,dbv){
+            dbv.PPID=job_tid;
+            if(record.job_uid!==undefined) dbv.PUID=record.job_uid;
+            if(record.Type!=='') dbv.S1=record.Type;
+            return true;
+        };
+        //-------------------------------------
+    }
+</script>
+<style>
+    VmInclude:__BASE__/vmiis/Common-Code/grid/grid.css
+</style>

@@ -2,8 +2,6 @@
 	"name":"Education & Immigration",
 	"url":"https://vmiis.github.io/modules/panels/panel.2.html",
 	"parameters":{
-		"sql_participant" : "@('Subject_Initials')+' '+@('Gender')+' '+@('DOB')",
-		"child_configuration_url":"/configurations/child-panel.json"
 	},
 	"panel":
 	{

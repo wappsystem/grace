@@ -1,0 +1,87 @@
+<section>
+      VmInclude:__BASE__/vmiis/Common-Code/grid/grid.html
+</section>
+<script>
+    function F__ID(){
+        //-------------------------------------
+//        _fields="_Form,_Date_Entry,Applicant ID|UID,Applicant Name|Applicant,Alias,Place_of_birth,Country,State,City,Area,Marriage Status,Date of Marriage/De facto|Date_of_Marriage,Email,Contact phone Number in your home country,Contact phone Number in Australia,Residential Address in your home country (including Postcode)|Residential_Address_home_country,Residential Address in Australia (including Postcode)|Residential_Address_Australia";
+        _fields="_Form,Applications|_Job_schedule,Applicant ID|UID,Givennames,Surname,Passport_No,Passport_Expire_Date,Visa,Subclass,Visa_Expire_Date,Visa_Grant_Date,DOB,Nationality,Street_Address,Suburb,Postcode,State,Country,Telephone,Mobile|Mobile,Email,Branch,Notes";
+        _fields+=",Submit Date|DateTime,Submitted by|Author,_Delete";
+        //-------------------------------------
+        VmInclude:__BASE__/vmiis/Common-Code/grid/grid.js
+        VmInclude:__BASE__/vmiis/Common-Code/style/ease-in-out.2.js
+        //-------------------------------------
+        $("#title__ID").text('Applicants');
+        $('#D__ID').on('load',function(){  _set_req(); _request_data();  })
+        //-------------------------------------
+        _cell_render=function(records,I,field,td,set_value,source){
+            switch(field){
+                case 'UID':
+                    records[I].vm_custom[field]=true;
+                    td.css('background','#f8f8f8');
+                    td.html(records[I].UID);
+                    break;
+                case 'DOB':
+                    VmInclude:__BASE__/vmiis/Common-Code/grid/field_dob.js
+                    break;
+                case 'Passport_Expire_Date':
+                case 'Visa_Expire_Date':
+                case 'Visa_Grant_Date':
+                    VmInclude:__BASE__/vmiis/Common-Code/grid/field_date.js
+                    break;
+                    case 'Suburb':
+                        VmInclude:__BASE__/vmiis/Common-Code/grid/field_suburb.js
+                    break;
+                    case 'Postcode':
+                        VmInclude:__BASE__/vmiis/Common-Code/grid/field_postcode.js
+                    break;
+/*                    case '_Date_Entry':
+                        records[I].vm_custom[field]=true;
+                        if(_records[I].UID===undefined) return;
+                        td.html("<u style='cursor:pointer'>Data Entry..</u>");
+                        td.find('u').on('click',function(){
+                            $vm.load_module_by_name(_module.var.data_entry_by_staff,$vm.root_layout_content_slot,{
+                                rid:_records[I].ID,applicant_uid:_records[I].UID,
+                                applicant:_records[I].Givennames+' '+_records[I].Surname,
+                            });
+                        });
+                        break;
+*/
+                    case '_Job_schedule':
+                        records[I].vm_custom[field]=true;
+                        if(_records[I].UID===undefined) return;
+                            td.html("<u style='cursor:pointer'>Applications..</u>");
+                            td.find('u').on('click',function(){
+                                						var op={
+                                                            mlist:_mlist,
+                                                            ids:_ids,
+                                							sql_client:_config.parameters.sql_client,
+                                                            rid:_records[I].ID,applicant_uid:_records[I].UID,
+                                                            applicant:_records[I].Givennames+' '+_records[I].Surname,
+                                						}
+                                $vm.load_module_by_name(_ids['scheduler_record'],$vm.root_layout_content_slot,op);
+                            });
+                        break;
+/*
+                    case '_Documents':
+                        records[I].vm_custom[field]=true;
+                        if(records[I].UID===undefined) return;
+                        var html="<u style='cursor:pointer'>Documents..</u>";
+                        td.html(html);
+                        td.find('u').on('click',function(){
+                            $vm.load_module_by_name($vm.module_list[_app_id+'scheduler_record'].var.document_module,$vm.root_layout_content_slot,{applicant_uid:_records[I].UID,applicant:_records[I].Givennames+' '+_records[I].Surname});
+                        })
+                        break;
+*/
+            }
+        }
+        //-------------------------------------
+        _before_submit=function(record,dbv){
+            return true;
+        };
+        //-------------------------------------
+    }
+</script>
+<style>
+    VmInclude:__BASE__/vmiis/Common-Code/grid/grid.css
+</style>
